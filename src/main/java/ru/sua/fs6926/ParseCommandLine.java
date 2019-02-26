@@ -3,6 +3,8 @@ package ru.sua.fs6926;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.cli.*;
 
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.util.Collections;
 import java.util.List;
 
@@ -32,6 +34,7 @@ class ParseCommandLine {
         options.addOption("i", false, "Файлы содержат целые числа. Обязательна, взаимоисключительна с -s.");
         options.addOption("a", false, "Сортировка по возрастанию. Применяется по умолчанию при отсутствии -a или -d.");
         options.addOption("d", false, "Сортировка по убыванию. Опция не обязательна как и -a.");
+        options.addOption("w", false, "Файлы ожидаются в кодировке CP1251. Опция не обязательна. По умолчанию используется UTF8 кодировка файлов.");
         options.addOption("h", "help", false, "Отобразить справку.");
         CommandLineParser parser = new DefaultParser();
         CommandLine cmd = null;
@@ -41,7 +44,7 @@ class ParseCommandLine {
             log.warn("Неизвестная опция \'{}\'", e.getOption());
             usagePrintAndShutdown(options, 1);
         } catch (ParseException e) {
-            log.error("Сбой разбора командной строки \'{}\'", e.getCause());
+            log.error("Сбой разбора командной строки \'{}\'", e.getMessage());
             usagePrintAndShutdown(options, 2);
         }
         if (cmd == null) {
@@ -63,17 +66,20 @@ class ParseCommandLine {
                 log.warn("Должна быть только одна опция или -a или -d");
                 usagePrintAndShutdown(options, 6);
             }
+
             List<String> files = cmd.getArgList();
             if (files.size() < 2) {
-                log.warn("Отсутствует имя файла для результата, или хотя бы одно имя исходного файла.");
+                log.warn("Отсутствует имя файла для результата, или хотя бы одно имя входного файла.");
                 usagePrintAndShutdown(options, 7);
             }
 
             if (cmd.hasOption('d')) Launcher.isAscending = false;
             if (cmd.hasOption('i')) Launcher.isStrings = false;
-            Launcher.outputfile = files.get(0);
+            if (cmd.hasOption('w')) Launcher.encoding = "cp1251";
+            Launcher.outputFileName = files.get(0);
             files.remove(0);
-            Launcher.inputfiles = Collections.unmodifiableList(files);
+            Launcher.inputFileNames = files;
+
         }
     }
 }
