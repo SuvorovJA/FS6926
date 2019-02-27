@@ -42,9 +42,9 @@ input.files  Один, или больше входных файлов.
 неправильные параметры
 
 ```
-$ ./sort.sh -a -d ; ./sort.sh -s -i ; ./sort.sh out.txt ;  ./sort.sh -s out.txt none
+$ ./sort.sh -a -d -i ; ./sort.sh -s -i ; ./sort.sh -i out.txt ;  ./sort.sh -s out.txt none
 
-23:46:04.931 [main] WARN  ru.sua.fs6926.ParseCommandLine - Отсутствует обязательная опция -s или -i
+00:00:50.287 [main] WARN  ru.sua.fs6926.ParseCommandLine - Должна быть только одна опция или -a или -d
 usage: java -jar filesorter.jar [OPTIONS] output.file input.files...
 output.file  Обязательное имя файла с результатом сортировки.
 input.files  Один, или больше входных файлов.
@@ -57,8 +57,8 @@ input.files  Один, или больше входных файлов.
  -s          Файлы содержат строки. Обязательна, взаимоисключительна с -i.
  -w          Файлы ожидаются в кодировке CP1251. Опция не обязательна. По
              умолчанию используется UTF8 кодировка файлов.
-
-23:46:05.269 [main] WARN  ru.sua.fs6926.ParseCommandLine - Должна быть только одна опция или -s или -i
+             
+00:00:50.628 [main] WARN  ru.sua.fs6926.ParseCommandLine - Должна быть только одна опция или -s или -i
 usage: java -jar filesorter.jar [OPTIONS] output.file input.files...
 output.file  Обязательное имя файла с результатом сортировки.
 input.files  Один, или больше входных файлов.
@@ -71,8 +71,8 @@ input.files  Один, или больше входных файлов.
  -s          Файлы содержат строки. Обязательна, взаимоисключительна с -i.
  -w          Файлы ожидаются в кодировке CP1251. Опция не обязательна. По
              умолчанию используется UTF8 кодировка файлов.
-
-23:46:05.601 [main] WARN  ru.sua.fs6926.ParseCommandLine - Отсутствует обязательная опция -s или -i
+             
+00:00:50.947 [main] WARN  ru.sua.fs6926.ParseCommandLine - Отсутствует имя файла для результата, или хотя бы одно имя входного файла.
 usage: java -jar filesorter.jar [OPTIONS] output.file input.files...
 output.file  Обязательное имя файла с результатом сортировки.
 input.files  Один, или больше входных файлов.
@@ -85,9 +85,9 @@ input.files  Один, или больше входных файлов.
  -s          Файлы содержат строки. Обязательна, взаимоисключительна с -i.
  -w          Файлы ожидаются в кодировке CP1251. Опция не обязательна. По
              умолчанию используется UTF8 кодировка файлов.
-
-23:46:05.939 [main] ERROR ru.sua.fs6926.ReadFileLineByLine - Входной файл 'none' не открыт по причине 'none (Нет такого файла или каталога)'. В сортировке не участвует.
-23:46:05.943 [main] ERROR ru.sua.fs6926.WorkersHolder - Нет доступных для обработки входных файлов.
+             
+00:00:51.271 [main] ERROR ru.sua.fs6926.ReadFileLineByLine - Входной файл 'none' не открыт по причине 'none (Нет такого файла или каталога)'. В сортировке не участвует.
+00:00:51.275 [main] ERROR ru.sua.fs6926.WorkersHolder - Нет доступных для обработки входных файлов.
 
 
 $ touch out ; chmod a-w out ; ./sort.sh -s out in
@@ -188,7 +188,7 @@ bbbb
 ```
 
 
-входные файлы integer descending
+входные файлы string descending
 ``` 
 $ ./sort.sh -d -s out.txt ExampleData/*strDesc*.txt ; cat out.txt
 23:54:45.628 [main] ERROR ru.sua.fs6926.SorterImpl - Нарушение сортировки в одном из входных файлов. Файл исключен из обработки.
