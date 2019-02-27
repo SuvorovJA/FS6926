@@ -28,7 +28,7 @@ class ParseCommandLine {
         System.exit(status);
     }
 
-    void invoke() {
+    void parse() {
         Options options = new Options();
         options.addOption("s", false, "Файлы содержат строки. Обязательна, взаимоисключительна с -i.");
         options.addOption("i", false, "Файлы содержат целые числа. Обязательна, взаимоисключительна с -s.");

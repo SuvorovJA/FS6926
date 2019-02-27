@@ -2,6 +2,7 @@ package ru.sua.fs6926;
 
 import lombok.extern.slf4j.Slf4j;
 
+import java.io.Closeable;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -13,7 +14,7 @@ import java.util.concurrent.LinkedBlockingDeque;
 
 
 @Slf4j
-public class ReadFileLineByLine<T> implements Runnable {
+public class ReadFileLineByLine<T> implements Runnable, Closeable {
 
     private String filename;
     private FileInputStream inputStream;
@@ -67,7 +68,7 @@ public class ReadFileLineByLine<T> implements Runnable {
                         value = (T) Integer.valueOf(line);
                     } catch (NumberFormatException e) {
                         log.warn("Остановлено чтение файла \'{}\' на значении \'{}\', по причине \'{}\'", filename, line, e.getMessage());
-                        stopMe();
+                        close();
                     }
                 }
                 if (value == null) continue;
@@ -75,18 +76,19 @@ public class ReadFileLineByLine<T> implements Runnable {
                     queue.putLast(value);
                 } catch (InterruptedException e) {
                     log.warn("Прервано чтение файла \'{}\'", filename);
-                    stopMe();
+                    close();
                 }
             }
             // note that Scanner suppresses exceptions
             if (sc.ioException() != null)
                 log.warn("Сбой при чтении файла \'{}\' по причине \'{}\'", filename, sc.ioException().getMessage());
         } finally {
-            stopMe();
+            close();
         }
     }
 
-    public void stopMe() {
+    @Override
+    public void close() {
         if (sc != null) sc.close();
         if (inputStream != null) {
             try {
