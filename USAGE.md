@@ -208,3 +208,66 @@ A
 100A
 
 ```
+
+тест на Windows c JRE 1.8.161 и скопированными jar и тестнабором файлов. 
+есть артифакты кодировки в консольном выводе 
+``` 
+C:\sort>sort.cmd -i -a out.txt ExampleData/in1asc.txt ExampleData/in1ascErrSort.txt ExampleData/in2asc.txt ExampleData/in3asc.txt ExampleData/in3ascErrType.txt
+Active code page: 65001
+00:29:40.375 [main] ERROR ru.sua.fs6926.SorterImpl - Нарушение формата чисел в одном из входных файлов. Файл исключен из обработки. В строке 'ASD'. Причина 'For input string: "ASD"
+'
+аботки. В строке 'ASD'. Причина 'For input string: "ASD"'
+put string: "ASD"'
+00:29:40.406 [main] ERROR ru.sua.fs6926.SorterImpl - Нарушение сортировки в одном из входных файлов. Файл исключен из обработки.
+�йлов. Файл исключен из обработки.
+ из обработки.
+отки.
+�.
+00:29:40.437 [pool-5-thread-1] WARN  ru.sua.fs6926.ReadFileLineByLine - Прервано чтение файла 'ExampleData/in3ascErrType.txt'
+n3ascErrType.txt'
+00:29:40.437 [pool-2-thread-1] WARN  ru.sua.fs6926.ReadFileLineByLine - Прервано чтение файла 'ExampleData/in1ascErrSort.txt'
+n1ascErrSort.txt'
+
+C:\sort>sort.cmd -s -d out.txt ExampleData/in6strDesc*
+Active code page: 65001
+00:37:50.774 [main] ERROR ru.sua.fs6926.SorterImpl - Нарушение сортировки в одном из входных файлов. Файл исключен из обработки.
+�йлов. Файл исключен из обработки.
+ из обработки.
+отки.
+�.
+00:37:50.786 [pool-3-thread-1] WARN  ru.sua.fs6926.ReadFileLineByLine - Прервано чтение файла 'ExampleData\in6strDescErrSort.txt'
+rDescErrSort.txt'
+
+C:\sort>type out.txt
+а
+Ц
+Х
+Ф
+ZZZZ
+ZZZZ
+Z
+Z
+XXX
+XXX
+A
+444
+100A
+
+C:\sort>
+
+```
+
+тест сортировки файлов в кодировке cp1251 на Windows, с ключем '-w'.
+результирующий out.txt приложен в ExampleDataWin/
+``` 
+C:\sort>sort.cmd -s -a -w out.txt ExampleDataWin/strAscCP1251.txt ExampleDataWin/strAscCP1251errSort.txt
+Active code page: 65001
+00:47:59.801 [main] ERROR ru.sua.fs6926.SorterImpl - Нарушение сортировки в одном из входных файлов. Файл исключен из обработки.
+�йлов. Файл исключен из обработки.
+ из обработки.
+отки.
+�.
+00:47:59.801 [pool-2-thread-1] WARN  ru.sua.fs6926.ReadFileLineByLine - Прервано чтение файла 'ExampleDataWin/strAscCP1251errSort.txt'
+P1251errSort.txt'
+
+```
