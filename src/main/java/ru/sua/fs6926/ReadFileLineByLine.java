@@ -6,6 +6,7 @@ import java.io.Closeable;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.util.Map;
 import java.util.Scanner;
 import java.util.concurrent.BlockingDeque;
 import java.util.concurrent.ExecutorService;
@@ -14,16 +15,18 @@ import java.util.concurrent.LinkedBlockingDeque;
 
 
 @Slf4j
-public class ReadFileLineByLine<T> implements Runnable, Closeable {
+public class ReadFileLineByLine implements Runnable, Closeable {
 
     private String filename;
     private FileInputStream inputStream;
     private Scanner sc;
-    private BlockingDeque<T> queue;
+    private BlockingDeque<String> queue;
     private ExecutorService service;
     private boolean failed;
+    private Map<BlockingDeque<String>, Boolean> hasFinishDataForDeque;
 
-    public ReadFileLineByLine(String filename, String encoding) {
+    public ReadFileLineByLine(String filename, String encoding, Map<BlockingDeque<String>, Boolean> map) {
+        this.hasFinishDataForDeque = map;
         this.filename = filename;
         try {
             inputStream = new FileInputStream(filename);
@@ -42,11 +45,7 @@ public class ReadFileLineByLine<T> implements Runnable, Closeable {
         return failed;
     }
 
-    public BlockingDeque<T> getQueue() {
-        return queue;
-    }
-
-    public BlockingDeque<T> beginAsyncReading() {
+    public BlockingDeque beginAsyncReading() {
         if (!failed) {
             service.submit(this);
             return queue;
@@ -60,27 +59,15 @@ public class ReadFileLineByLine<T> implements Runnable, Closeable {
         try {
             while (sc.hasNextLine()) {
                 String line = sc.nextLine();
-                T value = null;
-                if (Launcher.isStrings) {
-                    value = (T) line;
-                } else {
-                    try {
-                        value = (T) Integer.valueOf(line);
-                    } catch (NumberFormatException e) {
-                        log.warn("Остановлено чтение файла \'{}\' на значении \'{}\', по причине \'{}\'", filename, line, e.getMessage());
-                        close();
-                    }
-                }
-                if (value == null) continue;
+                if (line == null) continue;
+                String value = line.replaceAll("\\s+", "");
                 try {
                     queue.putLast(value);
                 } catch (InterruptedException e) {
                     log.warn("Прервано чтение файла \'{}\'", filename);
-                    close();
                 }
             }
-            // note that Scanner suppresses exceptions
-            if (sc.ioException() != null)
+            if (sc.ioException() != null) // note that Scanner suppresses exceptions
                 log.warn("Сбой при чтении файла \'{}\' по причине \'{}\'", filename, sc.ioException().getMessage());
         } finally {
             close();
@@ -97,6 +84,7 @@ public class ReadFileLineByLine<T> implements Runnable, Closeable {
                 // hide on closing
             }
         }
+        hasFinishDataForDeque.put(queue, true);
         service.shutdownNow();
     }
 }

@@ -3,9 +3,6 @@ package ru.sua.fs6926;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.cli.*;
 
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.util.Collections;
 import java.util.List;
 
 @Slf4j

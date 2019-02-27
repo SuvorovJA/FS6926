@@ -18,20 +18,11 @@ public class Launcher {
 
         new ParseCommandLine(args).parse();
 
-        if (isStrings) {
-            try (Sorter<String> sorter = new SorterImpl<>(outputFileName, encoding);
-                 WorkersHolder<String> holder = new WorkersHolder<>(sorter);) {
-                holder.doWork();
-            } catch (IOException e) {
-                log.error("Проблема при закрытии файлов \'{}\'",e.getMessage());
-            }
-        } else {
-            try (Sorter<Integer> sorter = new SorterImpl<>(outputFileName, encoding);
-                 WorkersHolder<Integer> holder = new WorkersHolder<>(sorter);) {
-                holder.doWork();
-            } catch (IOException e) {
-                log.error("Проблема при закрытии файлов \'{}\'",e.getMessage());
-            }
+        try (Sorter sorter = new SorterImpl(outputFileName, encoding);
+             WorkersHolder holder = new WorkersHolder(sorter)) {
+            holder.doWork();
+        } catch (IOException e) {
+            log.error("Проблема при закрытии файлов \'{}\'", e.getMessage());
         }
     }
 }

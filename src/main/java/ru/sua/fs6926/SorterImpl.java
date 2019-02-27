@@ -2,20 +2,16 @@ package ru.sua.fs6926;
 
 import lombok.extern.slf4j.Slf4j;
 
-import java.io.Closeable;
 import java.io.FileNotFoundException;
 import java.io.PrintWriter;
 import java.io.UnsupportedEncodingException;
-import java.util.Arrays;
-import java.util.Comparator;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 import java.util.concurrent.BlockingDeque;
 
 import static java.util.stream.Collectors.toList;
 
 @Slf4j
-public class SorterImpl<T> implements Sorter<T> {
+public class SorterImpl implements Sorter {
 
     private PrintWriter out;
 
@@ -32,72 +28,118 @@ public class SorterImpl<T> implements Sorter<T> {
     }
 
     @Override
-    public void doSort(List<BlockingDeque<T>> deques) {
+    public void doSort(List<BlockingDeque<String>> deques, Map<BlockingDeque<String>, Boolean> hasFinishDataForDeque) {
 
-        while (deques.stream().anyMatch(d -> d.peekFirst() != null)) {
-            deques.removeIf(d -> (d.peekFirst() == null && d.peekLast() == null)); // or d.size == 0
+        while (true) {
+            cleanFinishedDeques(deques, hasFinishDataForDeque);
             if (deques.size() == 0) break;
-            BlockingDeque<T> actualDeque = null;
-            if (Launcher.isStrings) {
-                // TODO Strings sort
-            } else {
-                if (Launcher.isAscending) {
-                    actualDeque = getActualDequeForIntegers(deques, Want.MIN);
-                } else {
-                    actualDeque = getActualDequeForIntegers(deques, Want.MAX);
+
+            BlockingDeque<String> actualDeque = null;
+            try {
+                actualDeque = getActualDeque(deques);
+                if (failedSortOrder(actualDeque)) {
+                    deques.remove(actualDeque);
+                    log.error("Нарушение сортировки в одном из входных файлов. Файл исключен из обработки."); // file name will show when shutdown reafer
+                    continue;
                 }
-            }
-            if (failedSortOrder(actualDeque)) {
+            } catch (NumberFormatException e) {
                 deques.remove(actualDeque);
-                log.error("Нарушение сортировки в одном из входных файлов. Файл исключен из обработки."); // file name will show when shutdown reafer
+                log.error(e.getMessage());
+                continue;
+            } catch (IllegalArgumentException e) {
                 continue;
             }
+
             try {
-                out.println(actualDeque.takeFirst());
+                if (actualDeque.size() > 0) out.println(actualDeque.takeFirst());
             } catch (InterruptedException e) {
                 log.error("Прерывание при получении значения из очереди. \'{}\'", e.getMessage());
             }
+
         }
     }
 
-    private boolean failedSortOrder(BlockingDeque<T> deque) {
-        if (deque.peekFirst() == null || deque.peekLast() == null) return false;
-        if (Launcher.isStrings) {
-            // TODO check sort for strings
-            return false;
-        } else {
-            if (Launcher.isAscending) {
-                return ((Integer) deque.peekFirst()) > ((Integer) deque.peekLast());
-            } else {
-                return ((Integer) deque.peekFirst()) < ((Integer) deque.peekLast());
+    private void cleanFinishedDeques(List<BlockingDeque<String>> deques, Map<BlockingDeque<String>, Boolean> hasFinish) {
+        for (BlockingDeque<String> deque : deques) {
+            if (hasFinish.containsKey(deque) && hasFinish.get(deque) && deque.size() == 0) {
+                deques.remove(deque);
+                hasFinish.remove(deque);
             }
         }
     }
 
-    private BlockingDeque<T> getActualDequeForIntegers(List<BlockingDeque<T>> deques, Want want) {
-        Integer iArray[] = new Integer[deques.size()];
-        BlockingDeque<T> dArray[] = new BlockingDeque[deques.size()];
+    private boolean failedSortOrder(BlockingDeque<String> deque) throws NumberFormatException {
+        if (deque.peekFirst() == null || deque.peekLast() == null) return false;
+        if (Launcher.isStrings) {
+            if (Launcher.isAscending) {
+                return (deque.peekFirst()).compareTo(deque.peekLast()) > 0;
+            } else {
+                return (deque.peekFirst()).compareTo(deque.peekLast()) < 0;
+            }
+        } else {
+            if (Launcher.isAscending) {
+                return string2integer(deque.peekFirst()) > string2integer(deque.peekLast());
+            } else {
+                return string2integer(deque.peekFirst()) < string2integer(deque.peekLast());
+            }
+        }
+    }
+
+    private BlockingDeque<String> getActualDeque(List<BlockingDeque<String>> deques)
+            throws NumberFormatException, IllegalArgumentException {
+        if (deques.size() == 1) return deques.get(0);
+        String vArray[] = new String[deques.size()];
+        BlockingDeque<String> dArray[] = new BlockingDeque[deques.size()];
         int i = 0;
-        for (BlockingDeque<T> deque : deques) {
+        for (BlockingDeque<String> deque : deques) {
             if (deque.peekFirst() == null) continue;
-            iArray[i] = (Integer) deque.peekFirst();
+            vArray[i] = deque.peekFirst();
             dArray[i] = deque;
             i++;
         }
-        if (want.equals(Want.MAX)) {
-            return dArray[findMaxIndex(iArray)];
+
+        if (Arrays.stream(vArray).anyMatch(Objects::isNull))
+            throw new IllegalArgumentException("due over fast grabbing");
+
+        if (Launcher.isStrings) {
+            if (Launcher.isAscending) {
+                return dArray[findIndexForStringsMinValue(vArray)];
+            } else {
+                return dArray[findIndexForStringsMaxValue(vArray)];
+            }
         } else {
-            return dArray[findMinIndex(iArray)];
+            if (Launcher.isAscending) {
+                return dArray[findIndexForIntegersMinValue(vArray)];
+            } else {
+                return dArray[findIndexForIntegersMaxValue(vArray)];
+            }
         }
     }
 
-    private int findMinIndex(Integer[] numbers) {
-        Optional<Integer> minimun = Arrays.stream(numbers).min(Comparator.comparingInt(Integer::intValue));
-        return Arrays.stream(numbers).collect(toList()).indexOf(minimun.get());
+
+    private int findIndexForStringsMaxValue(String[] strings) {
+        if (strings.length == 1) return 0;
+        Optional<String> maximum = Arrays.stream(strings).max(Comparator.comparing(String::toString));
+        return Arrays.stream(strings).collect(toList()).indexOf(maximum.get());
     }
 
-    private int findMaxIndex(Integer[] numbers) {
-        Optional<Integer> maximum = Arrays.stream(numbers).max(Comparator.comparingInt(Integer::intValue));
+    private int findIndexForStringsMinValue(String[] strings) {
+        if (strings.length == 1) return 0;
+        Optional<String> minimum = Arrays.stream(strings).min(Comparator.comparing(String::toString));
+        return Arrays.stream(strings).collect(toList()).indexOf(minimum.get());
+    }
+
+    private int findIndexForIntegersMinValue(String[] numbers) throws NumberFormatException {
+        if (numbers.length == 1) return 0;
+        Optional<Integer> iMinimum = Arrays.stream(numbers).map(this::string2integer).min(Comparator.comparingInt(Integer::intValue));
+        Optional<String> minimum = Optional.of(iMinimum.get().toString());
+        return Arrays.stream(numbers).collect(toList()).indexOf(minimum.get());
+    }
+
+    private int findIndexForIntegersMaxValue(String[] numbers) throws NumberFormatException {
+        if (numbers.length == 1) return 0;
+        Optional<Integer> iMaximum = Arrays.stream(numbers).map(this::string2integer).max(Comparator.comparingInt(Integer::intValue));
+        Optional<String> maximum = Optional.of(iMaximum.get().toString());
         return Arrays.stream(numbers).collect(toList()).indexOf(maximum.get());
     }
 
@@ -106,7 +148,14 @@ public class SorterImpl<T> implements Sorter<T> {
         if (out != null) out.close();
     }
 
-    private enum Want {
-        MIN, MAX
+    private Integer string2integer(String string) throws NumberFormatException {
+        try {
+            return Integer.valueOf(string);
+        } catch (NumberFormatException e) {
+            throw new NumberFormatException("Нарушение формата чисел в одном из входных файлов. " +
+                    "Файл исключен из обработки. В строке '" + string +
+                    "'. Причина '" + e.getMessage() + "'");
+        }
     }
+
 }
