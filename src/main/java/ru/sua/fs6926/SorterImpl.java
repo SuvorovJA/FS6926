@@ -11,11 +11,13 @@ import java.util.concurrent.BlockingDeque;
 import static java.util.stream.Collectors.toList;
 
 @Slf4j
-public class SorterImpl implements Sorter {
+public class SorterImpl implements Sorter, MediatorsSubscriber {
 
     private PrintWriter out;
+    private List<BlockingDeque<String>> eofList;
 
     public SorterImpl(String outputFileName, String encoding) {
+        eofList = new ArrayList<>();
         try {
             this.out = new PrintWriter(outputFileName, encoding);
         } catch (FileNotFoundException e) {
@@ -28,10 +30,10 @@ public class SorterImpl implements Sorter {
     }
 
     @Override
-    public void doSort(List<BlockingDeque<String>> deques, Map<BlockingDeque<String>, Boolean> hasFinishDataForDeque) {
+    public void doSort(List<BlockingDeque<String>> deques) {
 
         while (true) {
-            cleanFinishedDeques(deques, hasFinishDataForDeque);
+            cleanFinishedDeques(deques);
             if (deques.size() == 0) break;
 
             BlockingDeque<String> actualDeque = null;
@@ -59,11 +61,11 @@ public class SorterImpl implements Sorter {
         }
     }
 
-    private void cleanFinishedDeques(List<BlockingDeque<String>> deques, Map<BlockingDeque<String>, Boolean> hasFinish) {
+    private void cleanFinishedDeques(List<BlockingDeque<String>> deques) {
         for (BlockingDeque<String> deque : deques) {
-            if (hasFinish.containsKey(deque) && hasFinish.get(deque) && deque.size() == 0) {
+            if (eofList.contains(deque) && deque.size() == 0) {
                 deques.remove(deque);
-                hasFinish.remove(deque);
+                eofList.remove(deque);
             }
         }
     }
@@ -86,7 +88,7 @@ public class SorterImpl implements Sorter {
     }
 
     private BlockingDeque<String> getActualDeque(List<BlockingDeque<String>> deques)
-            throws NumberFormatException, IllegalArgumentException {
+            throws IllegalArgumentException {
         if (deques.size() == 1) return deques.get(0);
         String vArray[] = new String[deques.size()];
         BlockingDeque<String> dArray[] = new BlockingDeque[deques.size()];
@@ -156,6 +158,11 @@ public class SorterImpl implements Sorter {
                     "Файл исключен из обработки. В строке '" + string +
                     "'. Причина '" + e.getMessage() + "'");
         }
+    }
+
+    @Override
+    public void notifyEof(BlockingDeque<String> deque) {
+        eofList.add(deque);
     }
 
 }

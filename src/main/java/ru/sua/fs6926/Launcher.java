@@ -18,8 +18,10 @@ public class Launcher {
 
         new ParseCommandLine(args).parse();
 
+        Mediator mediator = new MediatorImpl();
         try (Sorter sorter = new SorterImpl(outputFileName, encoding);
-             WorkersHolder holder = new WorkersHolder(sorter)) {
+             WorkersHolder holder = new WorkersHolder(sorter,mediator)) {
+            mediator.subscribe((MediatorsSubscriber) sorter);
             holder.doWork();
         } catch (IOException e) {
             log.error("Проблема при закрытии файлов \'{}\'", e.getMessage());

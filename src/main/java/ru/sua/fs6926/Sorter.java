@@ -6,5 +6,5 @@ import java.util.Map;
 import java.util.concurrent.BlockingDeque;
 
 public interface Sorter extends Closeable {
-    void doSort(List<BlockingDeque<String>> deques, Map<BlockingDeque<String>, Boolean> hasFinishDataForDeque);
+    void doSort(List<BlockingDeque<String>> deques);
 }

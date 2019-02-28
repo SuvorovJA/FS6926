@@ -14,17 +14,18 @@ import java.util.concurrent.CopyOnWriteArrayList;
 public class WorkersHolder implements Closeable {
     private List<BlockingDeque<String>> deques = new CopyOnWriteArrayList<>();
     private List<ReadFileLineByLine> workers = new ArrayList<>();
-    private Map<BlockingDeque<String>, Boolean> hasFinishDataForDeque = new ConcurrentHashMap<>();
     private Sorter sorter;
+    private Mediator mediator;
 
 
-    public WorkersHolder(Sorter sorter) {
+    public WorkersHolder(Sorter sorter, Mediator mediator) {
         this.sorter = sorter;
+        this.mediator = mediator;
     }
 
     public void doWork() {
         for (String file : Launcher.inputFileNames) {
-            ReadFileLineByLine worker = new ReadFileLineByLine(file, Launcher.encoding, hasFinishDataForDeque);
+            ReadFileLineByLine worker = new ReadFileLineByLine(file, Launcher.encoding, mediator);
             if (!worker.isFailed()) workers.add(worker);
         }
         if (workers.size() == 0) {
@@ -36,7 +37,7 @@ public class WorkersHolder implements Closeable {
                 if (deque != null) deques.add(deque);
             }
         }
-        sorter.doSort(deques, hasFinishDataForDeque);
+        sorter.doSort(deques);
     }
 
     @Override

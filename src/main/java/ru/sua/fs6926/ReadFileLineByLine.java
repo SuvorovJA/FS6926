@@ -6,6 +6,7 @@ import java.io.Closeable;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.util.List;
 import java.util.Map;
 import java.util.Scanner;
 import java.util.concurrent.BlockingDeque;
@@ -23,10 +24,10 @@ public class ReadFileLineByLine implements Runnable, Closeable {
     private BlockingDeque<String> queue;
     private ExecutorService service;
     private boolean failed;
-    private Map<BlockingDeque<String>, Boolean> hasFinishDataForDeque;
+    private Mediator mediator;
 
-    public ReadFileLineByLine(String filename, String encoding, Map<BlockingDeque<String>, Boolean> map) {
-        this.hasFinishDataForDeque = map;
+    public ReadFileLineByLine(String filename, String encoding, Mediator mediator) {
+        this.mediator = mediator;
         this.filename = filename;
         try {
             inputStream = new FileInputStream(filename);
@@ -84,7 +85,7 @@ public class ReadFileLineByLine implements Runnable, Closeable {
                 // hide on closing
             }
         }
-        hasFinishDataForDeque.put(queue, true);
+        mediator.notifyEof(queue);
         service.shutdownNow();
     }
 }
